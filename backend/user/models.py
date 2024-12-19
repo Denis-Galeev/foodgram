@@ -35,14 +35,14 @@ class User(AbstractUser):
         blank=False,
         null=False,
         verbose_name='Имя',
-        help_text='Заполните Имя',
+        help_text='Введите Имя',
     )
     last_name = models.CharField(
         max_length=MAX_NAME_FIELD,
         blank=False,
         null=False,
         verbose_name='Фамилия',
-        help_text='Заполните Фамилию',
+        help_text='Введите Фамилию',
     )
     email = models.EmailField(
         max_length=MAX_EMAIL_FIELD,

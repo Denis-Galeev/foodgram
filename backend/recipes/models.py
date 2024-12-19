@@ -1,16 +1,176 @@
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+
+from api.constants import (
+    LENGTH_TEXT,
+    INGREDIENT_NAME_LEN,
+    MEASUREMENT_UNIT_LEN,
+    RECIPE_NAME_LEN,
+    DEFAULT_MIN_VALUE,
+    DEFAULT_MAX_VALUE,
+    MIN_TIME_MSG,
+    MAX_TIME_MSG,
+    MESSAGE_AMOUNT
+)
 
 User = get_user_model()
 
 
 class Tag(models.Model):
-    pass
+    """
+    Модель для работы с тегами,
+    отвечающая за уникальную фильтрацию рецептов.
+    """
+
+    name = models.CharField(
+        max_length=LENGTH_TEXT,
+        unique=True,
+        verbose_name='Название тэга',
+        help_text='Укажите название тега',
+    )
+    slug = models.SlugField(
+        max_length=LENGTH_TEXT,
+        unique=True,
+        blank=False,
+        null=False,
+        verbose_name='Уникальный слаг тэга',
+        help_text='Укажите слаг тега',
+    )
+
+    class Meta:
+        ordering = ('name', )
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+
+    def __str__(self):
+        return f'Тег "{self.name}"'
 
 
 class Ingredient(models.Model):
-    pass
+    """Модель ингредиентов, используемых в рецептах."""
+
+    name = models.CharField(
+        max_length=INGREDIENT_NAME_LEN,
+        unique=True,
+        verbose_name='Название ингредиента',
+        help_text='Введите название ингредиента',
+    )
+    measurement_unit = models.CharField(
+        max_length=MEASUREMENT_UNIT_LEN,
+        verbose_name='Единица измерения',
+        help_text='Введите единицу измерения',
+    )
+
+    class Meta:
+        ordering = ('name',)
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
+        default_related_name = 'ingredient'
+
+    def __str__(self):
+        return f'Ингредиент: {self.name}, ед. изм.: {self.measurement_unit}'
 
 
 class Recipe(models.Model):
-    pass
+    """Модель для работы с рецептами."""
+
+    name = models.CharField(
+        max_length=RECIPE_NAME_LEN,
+        verbose_name='Название рецепта',
+        help_text='Придумайте название для рецепта',
+    )
+    text = models.TextField(
+        verbose_name='Текстовое описание рецепта',
+        help_text='Опишите последовательность действий',
+    )
+    cooking_time = models.PositiveSmallIntegerField(
+        null=False,
+        verbose_name='Время приготовления',
+        help_text='Укажите время приготовления блюда в минутах',
+        validators=(
+            MinValueValidator(DEFAULT_MIN_VALUE, MIN_TIME_MSG),
+            MaxValueValidator(DEFAULT_MAX_VALUE, MAX_TIME_MSG),
+        ),
+        default=DEFAULT_MIN_VALUE,
+    )
+    image = models.ImageField(
+        upload_to='recipes/images/',
+        blank=False,
+        null=False,
+        verbose_name='Фото блюда',
+        help_text='Загрузите подходящее фото блюда',
+    )
+    author = models.ForeignKey(
+        User,
+        blank=False,
+        on_delete=models.CASCADE,
+        verbose_name='Автор рецепта',
+        help_text='Укажите автора рецепта',
+    )
+    tags = models.ManyToManyField(
+        Tag,
+        verbose_name='Тег',
+        help_text='Нужно указать хотя бы один тег',
+    )
+    ingredients = models.ManyToManyField(
+        Ingredient,
+        through='IngredientRecipe',
+        verbose_name='Ингредиент',
+        help_text='Укажите список требуемых ингредиентов',
+    )
+    pub_date = models.DateTimeField(
+        'дата и время публикации рецепта',
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ['-pub_date']
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
+        default_related_name = 'recipes'
+
+    def __str__(self):
+        return self.name[:LENGTH_TEXT]
+
+
+class RecipeIngredient(models.Model):
+    """
+    Количество ингридиентов в рецепте блюда.
+    Вспомогательная модель для связывания модели Recipe и Ingredient.
+    """
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт',
+        help_text='Укажите рецепт, к которому относится ингредиент',
+    )
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+        verbose_name='Ингредиент',
+        help_text='Укажите ингредиент, используемый в рецепте'
+    )
+    amount = models.PositiveSmallIntegerField(
+        verbose_name='Количество ингредиента в рецепте',
+        help_text='Укажите количество ингредиента в рецепте',
+        validators=(
+            MinValueValidator(DEFAULT_MIN_VALUE, MESSAGE_AMOUNT),
+            MaxValueValidator(DEFAULT_MAX_VALUE, MESSAGE_AMOUNT),
+        ),
+    )
+
+    class Meta:
+        ordering = ('recipe',)
+        verbose_name = 'Ингредиент в рецепте'
+        verbose_name_plural = 'Ингредиенты в рецепте'
+        default_related_name = 'ingredients_in_recipe'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='unique_recipe_ingredient'
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.recipe.name}: {self.ingredient.name} — {self.amount}'
