@@ -95,7 +95,7 @@ class Recipe(models.Model):
         default=DEFAULT_MIN_VALUE,
     )
     image = models.ImageField(
-        upload_to='recipes/images/',
+        upload_to='recipes/',
         blank=False,
         null=False,
         verbose_name='Фото блюда',
@@ -120,8 +120,9 @@ class Recipe(models.Model):
         help_text='Укажите список требуемых ингредиентов',
     )
     pub_date = models.DateTimeField(
-        'дата и время публикации рецепта',
+        verbose_name='Дата и время публикации рецепта',
         auto_now_add=True,
+        db_index=True,
     )
 
     class Meta:
@@ -139,6 +140,7 @@ class RecipeIngredient(models.Model):
     Количество ингридиентов в рецепте блюда.
     Вспомогательная модель для связывания модели Recipe и Ingredient.
     """
+
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -165,12 +167,65 @@ class RecipeIngredient(models.Model):
         verbose_name = 'Ингредиент в рецепте'
         verbose_name_plural = 'Ингредиенты в рецепте'
         default_related_name = 'ingredients_in_recipe'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['recipe', 'ingredient'],
-                name='unique_recipe_ingredient'
-            )
+        constraints = [models.UniqueConstraint(
+            fields=['recipe', 'ingredient'],
+            name='unique_recipe_ingredient'
+        )
         ]
 
     def __str__(self):
         return f'{self.recipe.name}: {self.ingredient.name} — {self.amount}'
+
+
+class BaseUserRecipeModel(models.Model):
+    """
+    Вспомогательная абстрактная модель для связывания модели Recipe и User.
+    Модель является базовой моделью для меделей Fovorite и ShoppingList.
+    """
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь',
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт',
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата и время добавления'
+    )
+
+    class Meta:
+        abstract = True
+        constraints = [models.UniqueConstraint(
+            fields=['user', 'recipe'],
+            name='%(class)s_user_recipe_unique'
+        )
+        ]
+
+
+class Favorite(BaseUserRecipeModel):
+    """
+    Модель для избранных рецептов пользлвателя.
+    Данная модель наследуется от базовой BaseUserRecipeModel.
+    """
+
+    class Meta(BaseUserRecipeModel.Meta):
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
+        default_related_name = 'favorites'
+
+
+class ShoppingList(BaseUserRecipeModel):
+    """
+    Модель для списка покупок пользлвателя.
+    Данная модель наследуется от базовой BaseUserRecipeModel.
+    """
+
+    class Meta(BaseUserRecipeModel.Meta):
+        verbose_name = 'Список покупок'
+        verbose_name_plural = 'Списки покупок'
+        default_related_name = 'shoppinglists'

@@ -64,7 +64,7 @@ class User(AbstractUser):
     )
     avatar = models.ImageField(
         upload_to='avatars/',
-        default='avatars/default.png',
+        # default='avatars/default.png',
         verbose_name='Аватарка или фото',
         help_text='Загрузите аватарку или фото',
     )
@@ -92,4 +92,29 @@ class Subscription(models.Model):
     """
     Модель подписок пользователей на других пользователей.
     """
-    pass
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='subscriptions',
+        verbose_name='Подписчик'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='followers',
+        verbose_name='Автор рецеата'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [models.UniqueConstraint(
+            fields=['user', 'author'],
+            name='unique_user_author'
+        )
+        ]
+
+    def __str__(self):
+        return f'{self.user} подписан на {self.author}'
