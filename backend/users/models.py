@@ -2,8 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from api.constants import (
-    MAX_EMAIL_FIELD, MAX_NAME_FIELD,
-    LENGTH_TEXT, HELP_TEXT_NAME, UNIQUE_FIELDS
+    MAX_EMAIL_FIELD, MAX_NAME_FIELD, LENGTH_TEXT, HELP_TEXT_NAME, UNIQUE_FIELDS
 )
 from .validators import UsernameValidator, validate_username
 
@@ -26,9 +25,7 @@ class User(AbstractUser):
         verbose_name='Имя пользователя',
         help_text=HELP_TEXT_NAME,
         validators=(UsernameValidator(), validate_username,),
-        error_messages={
-            'unique': UNIQUE_FIELDS[1],
-        },
+        error_messages={'unique': UNIQUE_FIELDS[1], },
     )
     first_name = models.CharField(
         max_length=MAX_NAME_FIELD,
@@ -51,9 +48,7 @@ class User(AbstractUser):
         null=False,
         verbose_name='Электронная почта',
         help_text='Введите свой email',
-        error_messages={
-            'unique': UNIQUE_FIELDS[0],
-        },
+        error_messages={'unique': UNIQUE_FIELDS[0], },
     )
     role = models.CharField(
         max_length=max(len(role) for role, _ in Role.choices),
@@ -70,6 +65,7 @@ class User(AbstractUser):
     )
 
     USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'username']
 
     @property
     def is_admin(self):

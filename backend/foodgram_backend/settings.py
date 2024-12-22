@@ -18,7 +18,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
-    'user',
+    'users',
     'recipes',
     'api',
 ]
@@ -86,15 +86,34 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'collected_static'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# REST_FRAMEWORK = {
-#     'DEFAULT_PERMISSION_CLASSES': [
-#         'rest_framework.permissions.IsAuthenticated', 
-#     ],
+AUTH_USER_MODEL = 'users.User'
 
-#     'DEFAULT_AUTHENTICATION_CLASSES': [
-#         'rest_framework.authentication.TokenAuthentication',
-#     ]
-# }
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
+    ),
+}
+
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+    # 'HIDE_USERS': False,
+    'SERIALIZERS': {
+        'user_create': 'api.serializers.SignUpSerializer',
+        'current_user': 'api.serializers.UserSerializer',
+    },
+    # 'PERMISSIONS': {
+    #     'user_list': ('rest_framework.permissions.AllowAny',),
+    #     'user': ('rest_framework.permissions.IsAuthenticatedOrReadOnly',),
+    #     'me': ('djoser.permissions.CurrentUserOrAdmin',),
+    # },
+}
