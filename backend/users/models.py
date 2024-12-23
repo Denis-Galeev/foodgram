@@ -4,7 +4,7 @@ from django.db import models
 from api.constants import (
     MAX_EMAIL_FIELD, MAX_NAME_FIELD, LENGTH_TEXT, HELP_TEXT_NAME, UNIQUE_FIELDS
 )
-from .validators import UsernameValidator, validate_username
+from users.validators import UsernameValidator, validate_username
 
 
 class User(AbstractUser):
@@ -20,8 +20,6 @@ class User(AbstractUser):
     username = models.CharField(
         max_length=MAX_NAME_FIELD,
         unique=True,
-        blank=False,
-        null=False,
         verbose_name='Имя пользователя',
         help_text=HELP_TEXT_NAME,
         validators=(UsernameValidator(), validate_username,),
@@ -59,7 +57,8 @@ class User(AbstractUser):
     )
     avatar = models.ImageField(
         upload_to='avatars/',
-        # default='avatars/default.png',
+        null=True,
+        blank=True,
         verbose_name='Аватарка или фото',
         help_text='Загрузите аватарку или фото',
     )
@@ -101,7 +100,7 @@ class Subscription(models.Model):
         related_name='followers',
         verbose_name='Автор рецеата'
     )
-    created_at = models.DateTimeField(auto_now_add=True)
+    # created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'Подписка'
@@ -113,4 +112,4 @@ class Subscription(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.user} подписан на {self.author}'
+        return f'{self.user.username} подписан на {self.author.username}'
