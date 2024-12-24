@@ -1,18 +1,19 @@
 from django.contrib.auth import get_user_model
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from rest_framework.validators import UniqueTogetherValidator
 
-from users.models import Subscription
 from recipes.serializers import ShortRecipeSerializer
+from users.models import Subscription
 
 User = get_user_model()
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(ModelSerializer):
     """Сериализатор для кастомной модели User."""
 
-    is_subscribed = serializers.SerializerMethodField()
+    is_subscribed = SerializerMethodField()
 
     class Meta:
         model = User
@@ -34,7 +35,7 @@ class UserSerializer(serializers.ModelSerializer):
         return False
 
 
-class AvatarSerializer(serializers.ModelSerializer):
+class AvatarSerializer(ModelSerializer):
     """Сериализатор для аватарки / фотографии пользователя"""
 
     avatar = Base64ImageField(allow_null=True)
@@ -84,8 +85,8 @@ class UserRecipeSerializer(UserSerializer):
         return ShortRecipeSerializer(recipes, many=True).data
 
 
-class SubscribeSerializer(serializers.ModelSerializer):
-    """Сериализатор подписок"""
+class SubscribeSerializer(ModelSerializer):
+    """Сериализатор для подписок"""
 
     user = serializers.SlugRelatedField(
         read_only=True,
@@ -103,13 +104,13 @@ class SubscribeSerializer(serializers.ModelSerializer):
         validators = [UniqueTogetherValidator(
             queryset=model.objects.all(),
             fields=('author', 'user'),
-            message='Вы уже подписаны на этого пользователя',)
+            message='У вас уже есть подписка на этого пользователя',)
         ]
 
     def validate_author(self, author):
         if self.context['request'].user == author:
             raise serializers.ValidationError(
-                'Нельзя подписаться на самого себя'
+                'Подписаться на самого себя нельзя - это странно'
             )
         return author
 
