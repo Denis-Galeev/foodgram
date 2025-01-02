@@ -1,7 +1,6 @@
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework.decorators import action
-from rest_framework.exceptions import ParseError
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -44,7 +43,6 @@ class UserViewSet(UserViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=HTTP_200_OK)
-
         serializer = UserSerializer(request.user, context={'request': request})
         return Response(serializer.data, status=HTTP_200_OK)
 
@@ -53,40 +51,40 @@ class UserViewSet(UserViewSet):
         url_name='subscribe', permission_classes=(IsAuthenticated,),
     )
     def subscribe(self, request, id):
+        """Подписка на автора или отмена подписки."""
         author = get_object_or_404(User, id=id)
         if request.method == 'POST':
             serializer = SubscribeSerializer(
-                data={'follower': request.user.id, 'following': author.id}
+                data={'user': request.user.id, 'author': author.id},
+                context={'request': request}
             )
             serializer.is_valid(raise_exception=True)
-            serializer.save()
-            author_serializer = UserRecipeSerializer(
-                author, context={'request': request}
+            subscription = serializer.save()
+            return Response(
+                serializer.to_representation(subscription),
+                status=HTTP_201_CREATED
             )
-            return Response(author_serializer.data, status=HTTP_201_CREATED)
         try:
             subscription = Subscription.objects.get(
-                follower=request.user, following=author)
+                user=request.user, author=author)
             subscription.delete()
             return Response(status=HTTP_204_NO_CONTENT)
         except Subscription.DoesNotExist:
-            raise ParseError('Объект не найден')
+            return Response(
+                {'detail': 'Подписка не найдена.'}, status=HTTP_400_BAD_REQUEST
+            )
 
     @action(
-        detail=False,
-        methods=['get'],
-        url_path='subscriptions',
-        url_name='subscriptions',
-        permission_classes=(IsAuthenticated,)
+        detail=False, methods=['get'], url_path='subscriptions',
+        url_name='subscriptions', permission_classes=(IsAuthenticated,)
     )
     def subscriptions(self, request):
-        authors = User.objects.filter(following__follower=request.user)
-        paginator = FoodgramPagination()
-        result_pages = paginator.paginate_queryset(
-            queryset=authors, request=request
-        )
+        """Получить список пользователей, на которых подписан пользователь."""
+        subscriptions = User.objects.filter(author__user=request.user)
+        paginator = self.pagination_class()
+        authors = paginator.paginate_queryset(subscriptions, request,)
         serializer = UserRecipeSerializer(
-            result_pages, context={'request': request}, many=True
+            authors, many=True, context={'request': request}
         )
         return paginator.get_paginated_response(serializer.data)
 

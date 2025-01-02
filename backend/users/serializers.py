@@ -1,7 +1,9 @@
 from django.contrib.auth import get_user_model
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework import serializers
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from rest_framework.serializers import (
+    IntegerField, ModelSerializer, SerializerMethodField,
+    ValidationError
+)
 from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.serializers import ShortRecipeSerializer
@@ -44,19 +46,12 @@ class AvatarSerializer(ModelSerializer):
         model = User
         fields = ('avatar',)
 
-    # def update(self, instance, validated_data):
-    #     instance.avatar = validated_data.get('avatar', instance.avatar)
-    #     instance.save()
-    #     return instance
-
 
 class UserRecipeSerializer(UserSerializer):
-    """Сериплизатор представления рецептов пользователя"""
+    """Сериализатор представления рецептов пользователя"""
 
-    recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.IntegerField(
-        read_only=True, source='recipes.count'
-    )
+    recipes = SerializerMethodField()
+    recipes_count = IntegerField(read_only=True, source='recipes.count')
 
     class Meta:
         model = User
@@ -73,7 +68,6 @@ class UserRecipeSerializer(UserSerializer):
         )
 
     def get_recipes(self, obj):
-
         request = self.context.get('request')
         recipes = obj.recipes.all()
         try:
@@ -88,31 +82,23 @@ class UserRecipeSerializer(UserSerializer):
 class SubscribeSerializer(ModelSerializer):
     """Сериализатор для подписок"""
 
-    user = serializers.SlugRelatedField(
-        read_only=True,
-        slug_field='email',
-        default=serializers.CurrentUserDefault(),
-    )
-    author = serializers.SlugRelatedField(
-        slug_field='email',
-        queryset=User.objects.all(),
-    )
-
     class Meta:
         model = Subscription
         fields = ('author', 'user')
-        validators = [UniqueTogetherValidator(
-            queryset=model.objects.all(),
-            fields=('author', 'user'),
-            message='У вас уже есть подписка на этого пользователя',)
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Subscription.objects.all(),
+                fields=('user', 'author'),
+                message='У вас уже есть подписка на этого пользователя',
+            )
         ]
 
     def validate_author(self, author):
+        """Запрет подписки на самого себя."""
         if self.context['request'].user == author:
-            raise serializers.ValidationError(
-                'Подписаться на самого себя нельзя - это странно'
-            )
+            raise ValidationError('Подписаться на самого себя нельзя.')
         return author
 
     def to_representation(self, instance):
+        """Форматирование данных для ответа."""
         return UserRecipeSerializer(instance.author, context=self.context).data
