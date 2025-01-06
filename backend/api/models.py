@@ -129,7 +129,7 @@ class Tag(models.Model):
     name = models.CharField(
         max_length=LENGTH_TEXT,
         unique=True,
-        verbose_name='Название тэга',
+        verbose_name='Название тега',
         help_text='Укажите название тега',
     )
     slug = models.SlugField(
@@ -137,7 +137,7 @@ class Tag(models.Model):
         unique=True,
         blank=False,
         null=False,
-        verbose_name='Уникальный слаг тэга',
+        verbose_name='Уникальный слаг тега',
         help_text='Укажите слаг тега',
     )
 
@@ -334,16 +334,14 @@ class ShoppingList(BaseUserRecipeModel):
         default_related_name = 'shoppinglists'
 
 
-class ShortLink(models.Model):  # новый
-    """Модель для хранения коротких ссылок на рецепты."""
-    recipe = models.OneToOneField(
-        Recipe, on_delete=models.CASCADE, related_name='short_link'
-    )
+class ShortLink(models.Model):
+    """Модель для хранения коротких ссылок."""
+    original_url = models.URLField(unique=True)
     short_code = models.CharField(max_length=10, unique=True)
 
     def generate_short_code(self):
-        """Генерация короткого кода на основе ID рецепта."""
-        return hashlib.md5(str(self.recipe.id).encode()).hexdigest()[:6]
+        """Генерация короткого кода на основе оригинального URL."""
+        return hashlib.md5(self.original_url.encode()).hexdigest()[:6]
 
     def save(self, *args, **kwargs):
         if not self.short_code:
@@ -351,4 +349,4 @@ class ShortLink(models.Model):  # новый
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.recipe.name} -> {self.short_code}"
+        return f'{self.original_url} -> {self.short_code}'

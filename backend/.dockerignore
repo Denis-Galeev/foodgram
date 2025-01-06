@@ -1,0 +1,25 @@
+# Django stuff:
+db.sqlite3
+
+# Environments
+.git
+venv
+venv/
+.venv
+.venv/
+.env
+.env/
+env
+env/
+
+# Папки, создаваемые средой разработки
+.idea
+.vscode
+
+# папки со статикой и медиа
+media
+media/
+static
+static/
+collected_static
+collected_static/

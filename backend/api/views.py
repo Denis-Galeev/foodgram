@@ -1,6 +1,9 @@
+from pathlib import Path
+
 from django.http import HttpResponse  # новый
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from djoser.views import UserViewSet
+# from django.views.decorators.http import require_GET
 from django_filters.rest_framework import (
     AllValuesMultipleFilter,
     BooleanFilter,
@@ -28,6 +31,8 @@ from rest_framework.status import (
 )
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from reportlab.pdfgen import canvas  # новый
+from reportlab.pdfbase import pdfmetrics  # новый
+from reportlab.pdfbase.ttfonts import TTFont  # новый
 
 from api.models import Ingredient, Tag, Subscription, User, Recipe
 from api.models import ShortLink, ShoppingList, Favorite, RecipeIngredient
@@ -308,35 +313,39 @@ class RecipeViewSet(ModelViewSet):  # новое
         if not shopping_list.exists():
             return Response({'detail': 'Список покупок пуст.'}, status=400)
 
-        # Суммируем ингредиенты из всех рецептов пользователя
         ingredients = {}
         for item in shopping_list:
             recipe_ingredients = RecipeIngredient.objects.filter(
                 recipe=item.recipe
             )
             for ingredient in recipe_ingredients:
-                name = f"{ingredient.ingredient.name} ({ingredient.ingredient.measurement_unit})"
+                name = (
+                    f'{ingredient.ingredient.name} '
+                    f'({ingredient.ingredient.measurement_unit})')
                 amount = ingredient.amount
                 if name in ingredients:
                     ingredients[name] += amount
                 else:
                     ingredients[name] = amount
-
-        # Создаем PDF-файл
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="shopping_cart.pdf"'
-
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping_cart.pdf"'
+        )
         p = canvas.Canvas(response)
-        p.setFont("Helvetica", 12)
-        p.drawString(100, 800, "Список покупок:")
 
+        BASE_DIR = Path(__file__).resolve().parent.parent
+        FONT_PATH = BASE_DIR / 'fonts' / 'DejaVuSans.ttf'
+        pdfmetrics.registerFont(TTFont('DejaVuSans', str(FONT_PATH), 'UTF-8'))
+        p.setFont('DejaVuSans', 14)
+
+        p.drawString(100, 800, 'Список покупок:')
         y = 780
         for name, amount in ingredients.items():
-            p.drawString(100, y, f"{name} — {amount}")
+            p.drawString(100, y, f'{name} — {amount}')
             y -= 20
-            if y < 50:  # Если места на странице не хватает, добавляем новую
+            if y < 50:
                 p.showPage()
-                p.setFont("Helvetica", 12)
+                p.setFont('DejaVuSans', 14)
                 y = 800
 
         p.save()
@@ -348,8 +357,15 @@ class RecipeViewSet(ModelViewSet):  # новое
             url_name='get-link',
             permission_classes=[IsAuthenticatedOrReadOnly])
     def get_link(self, request, pk=None):
-        """Получить короткую ссылку на рецепт."""
-        recipe = self.get_object()  # Убедитесь, что объект существует
-        short_link, created = ShortLink.objects.get_or_create(recipe=recipe)
-        base_url = "https://foodgram.example.org/s/"
-        return Response({"short-link": f"{base_url}{short_link.short_code}"})
+        # Формируем оригинальный URL
+        url = request.build_absolute_uri(f"/recipes/{pk}/")
+        # Генерируем или получаем короткую ссылку
+        short_link, created = ShortLink.objects.get_or_create(original_url=url)
+        # Динамическое определение базового URL
+        base_url = request.build_absolute_uri('/s/').rstrip('/')
+        return Response({"short-link": f"{base_url}/{short_link.short_code}"})
+
+
+def redirect_to_recipe(request, code):
+    """Перенаправление по короткой ссылке на оригинальный URL."""
+    return redirect(get_object_or_404(ShortLink, short_code=code).original_url)

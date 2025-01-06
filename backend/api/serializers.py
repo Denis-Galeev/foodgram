@@ -254,21 +254,9 @@ class RecipeSerializer(ModelSerializer):
         self.create_ingredients(recipe, ingredients_data)
         return recipe
 
-    # def update(self, instance, validated_data):
-    #     tags = validated_data.pop('tags', None)
-    #     ingredients_data = validated_data.pop('ingredients_in_recipe', None)
-    #     instance = super().update(instance, validated_data)
-    #     if tags:
-    #         instance.tags.set(tags)
-    #     if ingredients_data:
-    #         instance.ingredients_in_recipe.all().delete()
-    #         self.create_ingredients(instance, ingredients_data)
-    #     return instance
-
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags', None)
         ingredients_data = validated_data.pop('ingredients_in_recipe', None)
-
         # Проверка на отсутствие обязательных полей
         if ingredients_data is None:
             raise ValidationError(
@@ -300,4 +288,4 @@ class ShortLinkSerializer(ModelSerializer):  # новый
     """Сериализатор для короткой ссылки."""
     class Meta:
         model = ShortLink
-        fields = ('short_code',)
+        fields = ('original_url', 'short_code')
