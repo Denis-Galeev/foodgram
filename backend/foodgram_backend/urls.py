@@ -5,6 +5,10 @@ from rest_framework.routers import DefaultRouter
 from api.views import TagViewSet, IngredientViewSet, RecipeViewSet
 from api.views import UserViewSet, redirect_to_recipe
 
+# from recipes.views import TagViewSet, IngredientViewSet, RecipeViewSet
+# from users.views import UserViewSet
+# from shortlinks.views import redirect_to_recipe
+
 router_v1 = DefaultRouter()
 
 router_v1.register('users', UserViewSet, basename='users')

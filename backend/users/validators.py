@@ -1,7 +1,7 @@
 from django.contrib.auth.validators import ASCIIUsernameValidator
 from django.core.exceptions import ValidationError
 
-from api.constants import FORBIDDEN_NAME, RESOLVED_CHARS
+from constants import FORBIDDEN_NAME, RESOLVED_CHARS
 
 
 class UsernameValidator(ASCIIUsernameValidator):

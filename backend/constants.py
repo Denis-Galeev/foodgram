@@ -1,6 +1,10 @@
 DEFAULT_MIN_VALUE = 1
 
-DEFAULT_MAX_VALUE = 1440
+PAGE_SIZE = 6
+
+CODE_LEN = 10
+
+ADMIN_PER_PAGE = 20
 
 LENGTH_TEXT = 32
 
@@ -10,9 +14,13 @@ INGREDIENT_NAME_LEN = 128
 
 MAX_NAME_FIELD = 150
 
+MAX_EMAIL_FIELD = 254
+
 RECIPE_NAME_LEN = 256
 
-MAX_EMAIL_FIELD = 254
+DEFAULT_MAX_VALUE = 1440
+
+DEFAULT_MAX_AMOUNT = 20000
 
 RESOLVED_CHARS = (
     'Допустимы только латинские буквы, '
@@ -37,5 +45,5 @@ MAX_TIME_MSG = (
 
 MESSAGE_AMOUNT = (
     'Количество ингредиента в рецепте должно быть равно хотя бы 1, '
-    'и не превышать значение 1440 единиц'
+    'и не превышать значение 20000 единиц'
 )

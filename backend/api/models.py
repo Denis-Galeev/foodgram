@@ -4,11 +4,11 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
-from api.constants import (LENGTH_TEXT, INGREDIENT_NAME_LEN, RECIPE_NAME_LEN,
-                           DEFAULT_MIN_VALUE, DEFAULT_MAX_VALUE, MIN_TIME_MSG,
-                           MAX_TIME_MSG, MESSAGE_AMOUNT, MEASUREMENT_UNIT_LEN,
-                           MAX_EMAIL_FIELD, MAX_NAME_FIELD, HELP_TEXT_NAME,
-                           UNIQUE_FIELDS)
+from constants import (LENGTH_TEXT, INGREDIENT_NAME_LEN, RECIPE_NAME_LEN,
+                       DEFAULT_MIN_VALUE, DEFAULT_MAX_VALUE, MIN_TIME_MSG,
+                       MAX_TIME_MSG, MESSAGE_AMOUNT, MEASUREMENT_UNIT_LEN,
+                       MAX_EMAIL_FIELD, MAX_NAME_FIELD, HELP_TEXT_NAME,
+                       UNIQUE_FIELDS, DEFAULT_MAX_AMOUNT)
 from users.validators import UsernameValidator, validate_username
 
 
@@ -105,7 +105,6 @@ class Subscription(models.Model):
         related_name='author',
         verbose_name='Автор рецеата'
     )
-    # created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'Подписка'
@@ -180,7 +179,7 @@ class Recipe(models.Model):
 
     name = models.CharField(
         max_length=RECIPE_NAME_LEN,
-        verbose_name='Название рецепта',
+        verbose_name='Название',
         help_text='Придумайте название для рецепта',
     )
     text = models.TextField(
@@ -208,7 +207,7 @@ class Recipe(models.Model):
         User,
         blank=False,
         on_delete=models.CASCADE,
-        verbose_name='Автор рецепта',
+        verbose_name='Автор',
         help_text='Укажите автора рецепта',
     )
     tags = models.ManyToManyField(
@@ -261,7 +260,7 @@ class RecipeIngredient(models.Model):
         help_text='Укажите количество ингредиента в рецепте',
         validators=(
             MinValueValidator(DEFAULT_MIN_VALUE, MESSAGE_AMOUNT),
-            MaxValueValidator(DEFAULT_MAX_VALUE, MESSAGE_AMOUNT),
+            MaxValueValidator(DEFAULT_MAX_AMOUNT, MESSAGE_AMOUNT),
         ),
     )
 
@@ -305,8 +304,7 @@ class BaseUserRecipeModel(models.Model):
         abstract = True
         constraints = [models.UniqueConstraint(
             fields=['user', 'recipe'],
-            name='%(class)s_user_recipe_unique'
-        )
+            name='%(class)s_user_recipe_unique')
         ]
 
 

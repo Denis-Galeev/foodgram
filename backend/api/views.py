@@ -1,41 +1,29 @@
 from pathlib import Path
 
-from django.http import HttpResponse  # новый
+from django.contrib.auth import get_user_model
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from djoser.views import UserViewSet
-# from django.views.decorators.http import require_GET
-from django_filters.rest_framework import (
-    AllValuesMultipleFilter,
-    BooleanFilter,
-    CharFilter,
-    DjangoFilterBackend,
-    FilterSet,
-    NumberFilter
-)
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
-    AllowAny,
-    BasePermission,
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-    SAFE_METHODS,
+    AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 )
 from rest_framework.response import Response
 from rest_framework.status import (
-    HTTP_200_OK,
-    HTTP_201_CREATED,
-    HTTP_204_NO_CONTENT,
-    HTTP_400_BAD_REQUEST
+    HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST
 )
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
-from reportlab.pdfgen import canvas  # новый
-from reportlab.pdfbase import pdfmetrics  # новый
-from reportlab.pdfbase.ttfonts import TTFont  # новый
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
-from api.models import Ingredient, Tag, Subscription, User, Recipe
+from api.models import Ingredient, Tag, Subscription, Recipe
 from api.models import ShortLink, ShoppingList, Favorite, RecipeIngredient
+from api.filters import IngredientSearchFilter, RecipeFilter
+from api.pagination import FoodgramPagination
+from api.permissions import IsAuthorOrReadOnly
 from api.serializers import (
     AvatarSerializer,
     IngredientSerializer,
@@ -47,57 +35,7 @@ from api.serializers import (
     UserRecipeSerializer,
 )
 
-
-class FoodgramPagination(PageNumberPagination):
-    """Пагинация для проекта."""
-
-    page_size_query_param = 'limit'
-
-
-class IngredientSearchFilter(FilterSet):
-    """
-    Фильтр для вьюсета ингредиентов.
-    Ищет ингредиенты по полю name регистронезависимо,
-    по вхождению в начало названия
-    """
-
-    name = CharFilter(lookup_expr='istartswith')
-
-    class Meta:
-        model = Ingredient
-        fields = ('name', )
-
-
-class RecipeFilter(FilterSet):  # новый
-    """
-    Кастомный фильтр для рецептов.
-    Доступна фильтрация по избранному, автору, списку покупок и тегам.
-    """
-
-    is_favorited = BooleanFilter(method='filter_is_favorited')
-    is_in_shopping_cart = BooleanFilter(method='filter_is_in_shopping_cart')
-    tags = AllValuesMultipleFilter(field_name='tags__slug')
-    author = NumberFilter(field_name='author__id')
-
-    class Meta:
-        model = Recipe
-        fields = ['is_favorited', 'is_in_shopping_cart', 'tags', 'author']
-
-    def filter_is_favorited(self, queryset, name, value):
-        user = self.request.user
-        if user.is_anonymous:
-            return queryset.none() if value else queryset
-        if value:
-            return queryset.filter(favorites__user=user)
-        return queryset.exclude(favorites__user=user)
-
-    def filter_is_in_shopping_cart(self, queryset, name, value):
-        user = self.request.user
-        if user.is_anonymous:
-            return queryset.none() if value else queryset
-        if value:
-            return queryset.filter(shoppinglists__user=user)
-        return queryset.exclude(shoppinglists__user=user)
+User = get_user_model()
 
 
 class TagViewSet(ReadOnlyModelViewSet):
@@ -207,19 +145,7 @@ class UserViewSet(UserViewSet):
         return Response(serializer.data)
 
 
-class IsAuthorOrReadOnly(BasePermission):  # новое
-    """
-    Разрешение: Только автор может изменять или удалять рецепт.
-    Другие пользователи могут только просматривать.
-    """
-
-    def has_object_permission(self, request, view, obj):
-        if request.method in SAFE_METHODS:
-            return True
-        return obj.author == request.user
-
-
-class RecipeViewSet(ModelViewSet):  # новое
+class RecipeViewSet(ModelViewSet):
     """Вьюсет для рецептов."""
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
@@ -319,35 +245,45 @@ class RecipeViewSet(ModelViewSet):  # новое
                 recipe=item.recipe
             )
             for ingredient in recipe_ingredients:
-                name = (
-                    f'{ingredient.ingredient.name} '
-                    f'({ingredient.ingredient.measurement_unit})')
+                key = ingredient.ingredient.name
                 amount = ingredient.amount
-                if name in ingredients:
-                    ingredients[name] += amount
+                unit = ingredient.ingredient.measurement_unit
+                if key in ingredients:
+                    ingredients[key]['amount'] += amount
                 else:
-                    ingredients[name] = amount
+                    ingredients[key] = {
+                        'amount': amount,
+                        'unit': unit
+                    }
+
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = (
-            'attachment; filename="shopping_cart.pdf"'
+            'attachment; filename="shopping_list.pdf"'
         )
         p = canvas.Canvas(response)
 
         BASE_DIR = Path(__file__).resolve().parent.parent
         FONT_PATH = BASE_DIR / 'fonts' / 'DejaVuSans.ttf'
-        pdfmetrics.registerFont(TTFont('DejaVuSans', str(FONT_PATH), 'UTF-8'))
-        p.setFont('DejaVuSans', 14)
+        pdfmetrics.registerFont(TTFont('DejaVuSans', str(FONT_PATH)))
+        p.setFont('DejaVuSans', 16)
 
-        p.drawString(100, 800, 'Список покупок:')
-        y = 780
-        for name, amount in ingredients.items():
-            p.drawString(100, y, f'{name} — {amount}')
+        page_width = p._pagesize[0]
+        title = 'Список покупок'
+        title_width = p.stringWidth(title, 'DejaVuSans', 16)
+        p.drawString((page_width - title_width) / 2, 800, title)
+
+        y = 760
+        p.setFont('DejaVuSans', 14)
+        for idx, (name, data) in enumerate(ingredients.items(), start=1):
+            amount = data['amount']
+            unit = data['unit']
+            line = f'{idx}. {name}  —  {amount} {unit}'
+            p.drawString(100, y, line)
             y -= 20
             if y < 50:
                 p.showPage()
                 p.setFont('DejaVuSans', 14)
                 y = 800
-
         p.save()
         return response
 
@@ -357,13 +293,10 @@ class RecipeViewSet(ModelViewSet):  # новое
             url_name='get-link',
             permission_classes=[IsAuthenticatedOrReadOnly])
     def get_link(self, request, pk=None):
-        # Формируем оригинальный URL
-        url = request.build_absolute_uri(f"/recipes/{pk}/")
-        # Генерируем или получаем короткую ссылку
+        url = request.build_absolute_uri(f'/recipes/{pk}/')
         short_link, created = ShortLink.objects.get_or_create(original_url=url)
-        # Динамическое определение базового URL
         base_url = request.build_absolute_uri('/s/').rstrip('/')
-        return Response({"short-link": f"{base_url}/{short_link.short_code}"})
+        return Response({'short-link': f'{base_url}/{short_link.short_code}'})
 
 
 def redirect_to_recipe(request, code):

@@ -1,9 +1,11 @@
 from django.contrib.auth import get_user_model
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework.serializers import (
-    IntegerField, ModelSerializer, SerializerMethodField,
-    ValidationError
-)
+
+from rest_framework.serializers import (IntegerField,
+                                        ModelSerializer,
+                                        SerializerMethodField,
+                                        ValidationError)
+
 from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.serializers import ShortRecipeSerializer
@@ -30,11 +32,7 @@ class UserSerializer(ModelSerializer):
         )
 
     def get_is_subscribed(self, obj):
-        """Проверяет, подписан ли текущий пользователь на этого автора."""
-        user = self.context.get('request').user
-        if user.is_authenticated:
-            return Subscription.objects.filter(user=user, author=obj).exists()
-        return False
+        return getattr(obj, 'is_subscribed', False)
 
 
 class AvatarSerializer(ModelSerializer):
@@ -45,6 +43,12 @@ class AvatarSerializer(ModelSerializer):
     class Meta:
         model = User
         fields = ('avatar',)
+
+    def validate_avatar(self, val):
+        if val and not val.name.lower().endswith(('.png', '.jpg', '.jpeg')):
+            raise ValidationError(
+                'Загруженный файл не является корректным файлом.')
+        return val
 
 
 class UserRecipeSerializer(UserSerializer):

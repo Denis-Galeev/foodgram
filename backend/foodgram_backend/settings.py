@@ -5,6 +5,8 @@ from pathlib import Path
 from dotenv import load_dotenv, find_dotenv
 from django.core.management.utils import get_random_secret_key
 
+from constants import PAGE_SIZE
+
 load_dotenv(find_dotenv())
 
 
@@ -29,6 +31,7 @@ INSTALLED_APPS = [
     'djoser',
     # 'users',
     # 'recipes',
+    # 'shortlinks',
     'api',
 ]
 
@@ -115,6 +118,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'api.User'
+# AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -125,7 +129,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
 
-    'PAGE_SIZE': 6,
+    'PAGE_SIZE': PAGE_SIZE,
 
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -138,6 +142,8 @@ DJOSER = {
     'SERIALIZERS': {
         'user': 'api.serializers.UserSerializer',
         'current_user': 'api.serializers.UserSerializer',
+        # 'user': 'users.serializers.UserSerializer',
+        # 'current_user': 'users.serializers.UserSerializer',
     },
     'PERMISSIONS': {
         'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],

@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from api.constants import (
+from constants import (
     MAX_EMAIL_FIELD, MAX_NAME_FIELD, LENGTH_TEXT, HELP_TEXT_NAME, UNIQUE_FIELDS
 )
 from users.validators import UsernameValidator, validate_username
@@ -100,7 +100,6 @@ class Subscription(models.Model):
         related_name='author',
         verbose_name='Автор рецеата'
     )
-    # created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'Подписка'
