@@ -3,7 +3,7 @@ from django.contrib.admin.decorators import register
 from django.utils.html import format_html, mark_safe
 
 from constants import ADMIN_PER_PAGE
-from recipes.models import Ingredient, Tag, Recipe, Favorite, ShoppingList
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingList, Tag
 
 
 @register(Favorite)

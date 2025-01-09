@@ -4,8 +4,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.utils.html import mark_safe
 
-from users.models import Subscription
 from constants import ADMIN_PER_PAGE
+from users.models import Subscription
 
 User = get_user_model()
 

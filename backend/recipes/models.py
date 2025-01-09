@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from constants import (LENGTH_TEXT, INGREDIENT_NAME_LEN, RECIPE_NAME_LEN,
-                       DEFAULT_MIN_VALUE, DEFAULT_MAX_VALUE, MIN_TIME_MSG,
-                       MAX_TIME_MSG, MESSAGE_AMOUNT, MEASUREMENT_UNIT_LEN,
-                       DEFAULT_MAX_AMOUNT)
+from constants import (DEFAULT_MAX_AMOUNT, DEFAULT_MAX_VALUE,
+                       DEFAULT_MIN_VALUE, INGREDIENT_NAME_LEN, LENGTH_TEXT,
+                       MAX_TIME_MSG, MEASUREMENT_UNIT_LEN, MESSAGE_AMOUNT,
+                       MIN_TIME_MSG, RECIPE_NAME_LEN)
 
 User = get_user_model()
 
@@ -186,10 +186,6 @@ class BaseUserRecipeModel(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Рецепт',
     )
-    # created_at = models.DateTimeField(
-    #     auto_now_add=True,
-    #     verbose_name='Дата и время добавления'
-    # )
 
     class Meta:
         abstract = True

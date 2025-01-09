@@ -3,37 +3,31 @@ from pathlib import Path
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
-from djoser.views import UserViewSet
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.decorators import action
-from rest_framework.filters import SearchFilter
-from rest_framework.permissions import (
-    AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-)
-from rest_framework.response import Response
-from rest_framework.status import (
-    HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST
-)
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
-from reportlab.pdfgen import canvas
+from djoser.views import UserViewSet
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from rest_framework.decorators import action
+from rest_framework.filters import SearchFilter
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
+from rest_framework.response import Response
+from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
+                                   HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST)
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from api.models import Ingredient, Tag, Subscription, Recipe
-from api.models import ShortLink, ShoppingList, Favorite, RecipeIngredient
 from api.filters import IngredientSearchFilter, RecipeFilter
 from api.pagination import FoodgramPagination
 from api.permissions import IsAuthorOrReadOnly
-from api.serializers import (
-    AvatarSerializer,
-    IngredientSerializer,
-    RecipeSerializer,
-    ShortRecipeSerializer,
-    SubscribeSerializer,
-    TagSerializer,
-    UserSerializer,
-    UserRecipeSerializer,
-)
+from api.serializers import (AvatarSerializer, IngredientSerializer,
+                             RecipeSerializer, ShortRecipeSerializer,
+                             SubscribeSerializer, TagSerializer,
+                             UserRecipeSerializer, UserSerializer)
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingList, Tag)
+from shortlinks.models import ShortLink
+from users.models import Subscription
 
 User = get_user_model()
 

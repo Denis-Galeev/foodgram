@@ -2,7 +2,7 @@ import csv
 
 from django.core.management.base import BaseCommand
 
-from api.models import Tag
+from recipes.models import Tag
 
 
 class Command(BaseCommand):
