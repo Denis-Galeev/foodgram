@@ -72,10 +72,30 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-      - name: Install dependencies
+      - name: Update dependencies
         run: |
           cd frontend/
+          npm install -g npm-check-updates
+          ncu -u
           npm install
+      - name: Replace outdated Babel plugins
+        run: |
+          cd frontend/
+          sed -i 's/@babel\/plugin-proposal-unicode-property-regex/@babel\/plugin-transform-unicode-property-regex/g' .babelrc || true
+          sed -i 's/@babel\/plugin-proposal-private-methods/@babel\/plugin-transform-private-methods/g' .babelrc || true
+          sed -i 's/@babel\/plugin-proposal-numeric-separator/@babel\/plugin-transform-numeric-separator/g' .babelrc || true
+          sed -i 's/@babel\/plugin-proposal-logical-assignment-operators/@babel\/plugin-transform-logical-assignment-operators/g' .babelrc || true
+          sed -i 's/@babel\/plugin-proposal-json-strings/@babel\/plugin-transform-json-strings/g' .babelrc || true
+          sed -i 's/@babel\/plugin-proposal-export-namespace-from/@babel\/plugin-transform-export-namespace-from/g' .babelrc || true
+          sed -i 's/@babel\/plugin-proposal-dynamic-import/@babel\/plugin-transform-dynamic-import/g' .babelrc || true
+          sed -i 's/@babel\/plugin-proposal-class-properties/@babel\/plugin-transform-class-properties/g' .babelrc || true
+          sed -i 's/@babel\/plugin-proposal-private-property-in-object/@babel\/plugin-transform-private-property-in-object/g' .babelrc || true
+          sed -i 's/@babel\/plugin-proposal-optional-catch-binding/@babel\/plugin-transform-optional-catch-binding/g' .babelrc || true
+          sed -i 's/@babel\/plugin-proposal-class-static-block/@babel\/plugin-transform-class-static-block/g' .babelrc || true
+          sed -i 's/@babel\/plugin-proposal-nullish-coalescing-operator/@babel\/plugin-transform-nullish-coalescing-operator/g' .babelrc || true
+      - name: Install timers-browserify
+        run: |
+          cd frontend/
           npm install timers-browserify
       - name: Configure Jest
         run: |
