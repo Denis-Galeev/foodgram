@@ -7,6 +7,7 @@ from dotenv import find_dotenv, load_dotenv
 
 from constants import PAGE_SIZE
 
+
 load_dotenv(find_dotenv())
 
 

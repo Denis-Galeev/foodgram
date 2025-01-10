@@ -1,0 +1,17 @@
+[tool.black]
+line-length = 79
+target-version = ['py39']
+include = '\.pyi?$'
+skip-string-normalization = true
+extend-exclude = "(migrations|stubs)/"
+
+[tool.isort]
+profile = "django"
+combine_as_imports = true
+include_trailing_comma = true
+line_length = 79
+multi_line_output = 3
+src_paths=["backend"]
+extend_skip = ["migrations", "tests"]
+no_lines_before = ["LOCALFOLDER"]
+lines_after_imports=2

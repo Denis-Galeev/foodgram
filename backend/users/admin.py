@@ -7,6 +7,7 @@ from django.utils.html import mark_safe
 from constants import ADMIN_PER_PAGE
 from users.models import Subscription
 
+
 User = get_user_model()
 
 

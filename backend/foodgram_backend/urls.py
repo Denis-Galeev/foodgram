@@ -2,8 +2,14 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from api.views import (IngredientViewSet, RecipeViewSet, TagViewSet,
-                       UserViewSet, redirect_to_recipe)
+from api.views import (
+    IngredientViewSet,
+    RecipeViewSet,
+    TagViewSet,
+    UserViewSet,
+    redirect_to_recipe,
+)
+
 
 # from recipes.views import TagViewSet, IngredientViewSet, RecipeViewSet
 # from users.views import UserViewSet
