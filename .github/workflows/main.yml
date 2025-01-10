@@ -76,6 +76,11 @@ jobs:
         run: |
           cd frontend/
           npm install
+          npm install timers-browserify
+      - name: Configure Jest
+        run: |
+          cd frontend/
+          echo "require('timers-browserify');" >> jest.config.js
       - name: Test frontend
         run: |
           cd frontend/
