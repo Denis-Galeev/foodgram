@@ -1,9 +1,17 @@
-FROM node:21.7.1-alpine
+FROM node:alpine
+
 WORKDIR /app
-COPY package.json package.json
-COPY package-lock.json package-lock.json
+
+COPY package*.json ./
+
+# Установка зависимостей
 RUN npm ci
+
+# Логирование результата
+RUN echo "Dependencies installed:"
+RUN ls -l node_modules
+
 COPY . .
+
 RUN npm run build
-RUN npm install --global http-server
 CMD cp -r build result_build
