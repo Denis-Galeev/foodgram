@@ -19,6 +19,7 @@ env/
 # папки со статикой и медиа
 media
 media/
+*media
 static
 static/
 collected_static
