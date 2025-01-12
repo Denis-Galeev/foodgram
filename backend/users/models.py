@@ -81,7 +81,7 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ('id', 'username',)
+        ordering = ('username', 'id',)
 
     def __str__(self):
         return self.username[:LENGTH_TEXT]
@@ -106,6 +106,7 @@ class Subscription(models.Model):
     )
 
     class Meta:
+        ordering = ('user',)
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
         constraints = [models.UniqueConstraint(

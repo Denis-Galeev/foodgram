@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from django.contrib.auth import get_user_model
+from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
@@ -36,6 +37,14 @@ from api.serializers import (
     TagSerializer,
     UserRecipeSerializer,
     UserSerializer,
+)
+from constants import (
+    LINE_SPACING,
+    PAGE_BOTTOM_MARGIN,
+    PAGE_TOP,
+    PAGE_WIDTH_MARGIN,
+    TEXT_FONT_SIZE,
+    TITLE_FONT_SIZE,
 )
 from recipes.models import (
     Favorite,
@@ -150,7 +159,7 @@ class UserViewSet(UserViewSet):
             user.avatar = None
             user.save()
             return Response(status=HTTP_204_NO_CONTENT)
-        elif 'avatar' not in request.data:
+        if 'avatar' not in request.data:
             return Response({'detail': 'Поле аватар обязательно.'},
                             status=HTTP_400_BAD_REQUEST)
         serializer = AvatarSerializer(user, data=request.data, partial=True)
@@ -170,12 +179,8 @@ class RecipeViewSet(ModelViewSet):
 
     def get_queryset(self):
         """Оптимизация запроса."""
-        queryset = super().get_queryset().prefetch_related(
-            'tags',
-            'ingredients',
-            'author'
-        )
-        return queryset
+        return (super().get_queryset().prefetch_related(
+            'tags', 'ingredients', 'author'))
 
     @action(detail=True,
             methods=['post'],
@@ -184,7 +189,7 @@ class RecipeViewSet(ModelViewSet):
         """Добавить рецепт в список покупок."""
         recipe = self.get_object()
         user = request.user
-        if ShoppingList.objects.filter(user=user, recipe=recipe).exists():
+        if recipe.shoppinglists.filter(user=user).exists():
             return Response(
                 {'detail': 'Рецепт уже в списке покупок.'},
                 status=HTTP_400_BAD_REQUEST
@@ -198,10 +203,7 @@ class RecipeViewSet(ModelViewSet):
         """Удалить рецепт из списка покупок."""
         recipe = self.get_object()
         user = request.user
-        shopping_item = ShoppingList.objects.filter(
-            user=user,
-            recipe=recipe
-        ).first()
+        shopping_item = recipe.shoppinglists.filter(user=user).first()
         if not shopping_item:
             return Response(
                 {'detail': 'Рецепта нет в списке покупок.'},
@@ -217,7 +219,7 @@ class RecipeViewSet(ModelViewSet):
         """Добавить рецепт в избранное."""
         recipe = self.get_object()
         user = request.user
-        if Favorite.objects.filter(user=user, recipe=recipe).exists():
+        if recipe.favorites.filter(user=user).exists():
             return Response(
                 {'detail': 'Рецепт уже в избранном.'},
                 status=HTTP_400_BAD_REQUEST
@@ -231,10 +233,7 @@ class RecipeViewSet(ModelViewSet):
         """Удалить рецепт из избранного."""
         recipe = self.get_object()
         user = request.user
-        favorite_item = Favorite.objects.filter(
-            user=user,
-            recipe=recipe
-        ).first()
+        favorite_item = recipe.favorites.filter(user=user).first()
         if not favorite_item:
             return Response(
                 {'detail': 'Рецепта нет в избранном.'},
@@ -251,54 +250,47 @@ class RecipeViewSet(ModelViewSet):
         user = request.user
         shopping_list = ShoppingList.objects.filter(user=user)
         if not shopping_list.exists():
-            return Response({'detail': 'Список покупок пуст.'}, status=400)
-
-        ingredients = {}
-        for item in shopping_list:
-            recipe_ingredients = RecipeIngredient.objects.filter(
-                recipe=item.recipe
+            return Response(
+                {'detail': 'Список покупок пуст.'},
+                status=HTTP_400_BAD_REQUEST
             )
-            for ingredient in recipe_ingredients:
-                key = ingredient.ingredient.name
-                amount = ingredient.amount
-                unit = ingredient.ingredient.measurement_unit
-                if key in ingredients:
-                    ingredients[key]['amount'] += amount
-                else:
-                    ingredients[key] = {
-                        'amount': amount,
-                        'unit': unit
-                    }
+
+        ingredients = (
+            RecipeIngredient.objects
+            .filter(recipe__shoppinglists__user=user)
+            .values('ingredient__name', 'ingredient__measurement_unit')
+            .annotate(total_amount=Sum('amount'))
+            .order_by('ingredient__name')
+        )
 
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = (
-            'attachment; filename="shopping_list.pdf"'
-        )
-        p = canvas.Canvas(response)
+        response['Content-Disposition'] = ('attachment; filename="list.pdf"')
+        pdf = canvas.Canvas(response)
 
         BASE_DIR = Path(__file__).resolve().parent.parent
         FONT_PATH = BASE_DIR / 'fonts' / 'DejaVuSans.ttf'
         pdfmetrics.registerFont(TTFont('DejaVuSans', str(FONT_PATH)))
-        p.setFont('DejaVuSans', 16)
 
-        page_width = p._pagesize[0]
+        pdf.setFont('DejaVuSans', TITLE_FONT_SIZE)
+        page_width = pdf._pagesize[0]
         title = 'Список покупок'
-        title_width = p.stringWidth(title, 'DejaVuSans', 16)
-        p.drawString((page_width - title_width) / 2, 800, title)
+        title_width = pdf.stringWidth(title, 'DejaVuSans', TITLE_FONT_SIZE)
+        pdf.drawString((page_width - title_width) / 2, PAGE_TOP, title)
 
-        y = 760
-        p.setFont('DejaVuSans', 14)
-        for idx, (name, data) in enumerate(ingredients.items(), start=1):
-            amount = data['amount']
-            unit = data['unit']
-            line = f'{idx}. {name}  —  {amount} {unit}'
-            p.drawString(100, y, line)
-            y -= 20
-            if y < 50:
-                p.showPage()
-                p.setFont('DejaVuSans', 14)
-                y = 800
-        p.save()
+        y = PAGE_TOP - LINE_SPACING * 2
+        pdf.setFont('DejaVuSans', TEXT_FONT_SIZE)
+        for idx, ingredient in enumerate(ingredients, start=1):
+            name = ingredient['ingredient__name']
+            unit = ingredient['ingredient__measurement_unit']
+            amount = ingredient['total_amount']
+            line = f'{idx}. {name} — {amount} {unit}'
+            pdf.drawString(PAGE_WIDTH_MARGIN, y, line)
+            y -= LINE_SPACING
+            if y < PAGE_BOTTOM_MARGIN:
+                pdf.showPage()
+                pdf.setFont('DejaVuSans', TEXT_FONT_SIZE)
+                y = PAGE_TOP - LINE_SPACING
+        pdf.save()
         return response
 
     @action(detail=True,

@@ -41,7 +41,7 @@ class Tag(models.Model):
     )
 
     class Meta:
-        ordering = ('name', )
+        ordering = ('name', 'id',)
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
 
@@ -65,7 +65,7 @@ class Ingredient(models.Model):
     )
 
     class Meta:
-        ordering = ('name',)
+        ordering = ('name', 'id',)
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
         default_related_name = 'ingredient'
@@ -128,7 +128,7 @@ class Recipe(models.Model):
     )
 
     class Meta:
-        ordering = ['-pub_date']
+        ordering = ('-pub_date',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
         default_related_name = 'recipes'
@@ -197,6 +197,7 @@ class BaseUserRecipeModel(models.Model):
     )
 
     class Meta:
+        ordering = ('recipe',)
         abstract = True
         constraints = [models.UniqueConstraint(
             fields=['user', 'recipe'],

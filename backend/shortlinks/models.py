@@ -32,5 +32,6 @@ class ShortLink(Model):
         return f'{self.original_url} -> {self.short_code}'
 
     class Meta:
+        ordering = ('original_url',)
         verbose_name = 'Короткая ссылка'
         verbose_name_plural = 'Короткие ссылки'

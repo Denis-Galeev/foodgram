@@ -1,5 +1,6 @@
 # Django stuff:
 db.sqlite3
+Dockerfile
 
 # Environments
 .git
@@ -15,6 +16,11 @@ env/
 # Папки, создаваемые средой разработки
 .idea
 .vscode
+__pycache__/
+/__pycache__/
+*__pycache__/
+*/__pycache__/
+
 
 # папки со статикой и медиа
 media
