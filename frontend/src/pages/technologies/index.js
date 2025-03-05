@@ -19,28 +19,28 @@ const Technologies = () => {
           <div className={styles.text}>
             <ul className={styles.textItem}>
               <li className={styles.textItem}>
-                <img src="https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54" alt="Python"></img>
+                <img src="https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54" alt="Python" />
               </li>
               <li className={styles.textItem}>
-                <img src="https://img.shields.io/badge/django-%230c4b34?style=for-the-badge&logo=django&logoColor=white" alt="Django"></img>
+                <img src="https://img.shields.io/badge/django-%230c4b34?style=for-the-badge&logo=django&logoColor=white" alt="Django" />
               </li>
               <li className={styles.textItem}>
-                <img src="https://img.shields.io/badge/framework-%23a30000?style=for-the-badge&logo=django&logoColor=white&label=rest&labelColor=%232c2c2c" alt="Django REST Framework"></img>
+                <img src="https://img.shields.io/badge/framework-%23a30000?style=for-the-badge&logo=django&logoColor=white&label=rest&labelColor=%232c2c2c" alt="Django REST Framework" />
               </li>
               <li className={styles.textItem}>
-                <img src="https://img.shields.io/badge/Djoser-092E20?style=for-the-badge&amp;logo=django&amp;logoColor=whiteDjoser" alt="Djoser"></img>
+                <img src="https://img.shields.io/badge/Djoser-092E20?style=for-the-badge&amp;logo=django&amp;logoColor=whiteDjoser" alt="Djoser" />
               </li>
               <li className={styles.textItem}>
-                <img src="https://img.shields.io/badge/PostgreSQL-336690?style=for-the-badge&logo=postgresql&logoColor=white&logoSize=auto" alt="Postgres"></img>
+                <img src="https://img.shields.io/badge/PostgreSQL-336690?style=for-the-badge&logo=postgresql&logoColor=white&logoSize=auto" alt="Postgres" />
               </li>
               <li className={styles.textItem}>
-                <img src="https://img.shields.io/badge/nginx-%23009639.svg?style=for-the-badge&logo=nginx&logoColor=white" alt="Nginx"></img>
+                <img src="https://img.shields.io/badge/nginx-%23009639.svg?style=for-the-badge&logo=nginx&logoColor=white" alt="Nginx" />
               </li>
               <li className={styles.textItem}>
-                <img src="https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"></img>
+                <img src="https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
               </li>
               <li className={styles.textItem}>
-                <img src="https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions"></img>
+                <img src="https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions" />
               </li>
             </ul>
           </div>
