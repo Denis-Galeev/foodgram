@@ -118,4 +118,8 @@ sudo docker compose -f docker-compose.yml stop  # без удаления
 
 ## Автор
 
-Денис Галеев https://github.com/Denis-Galeev
+## Автор:
+
+**Имя:** Денис Галеев  
+**Почта:** dmdenis74chel@yandex.ru  
+**Telegram:** @Denis_74_chel 
